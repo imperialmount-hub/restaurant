@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const analyzeMenuImage = async (base64Image, mimeType) => {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `
       Энэхүү хоолны цэсний зурагнаас хоолнуудыг ялган авч JSON форматаар буцаана уу.
