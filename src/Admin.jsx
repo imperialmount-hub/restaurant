@@ -319,6 +319,44 @@ function Admin() {
                 </div>
             )}
 
+            {isEditModalOpen && editingProduct && (
+                <div className="modal-overlay">
+                    <div className="admin-modal glass-morphism">
+                        <h2 style={{ marginBottom: '1.5rem' }}>Хоол засах</h2>
+                        <form onSubmit={handleEditSubmit}>
+                            <div className="form-group">
+                                <label>Хоолны нэр</label>
+                                <input type="text" required value={editingProduct.title} onChange={e => setEditingProduct({ ...editingProduct, title: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Ангилал</label>
+                                <select value={editingProduct.category} onChange={e => setEditingProduct({ ...editingProduct, category: e.target.value })}>
+                                    {categories.filter(c => c.id !== 'all').map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Үнэ (₮)</label>
+                                <input type="number" required value={editingProduct.price} onChange={e => setEditingProduct({ ...editingProduct, price: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Тайлбар</label>
+                                <textarea rows="3" value={editingProduct.description} onChange={e => setEditingProduct({ ...editingProduct, description: e.target.value })}></textarea>
+                            </div>
+                            <div className="form-group">
+                                <label>Тагууд (таслалаар тусгаарлах)</label>
+                                <input type="text" value={editingProduct.tags} onChange={e => setEditingProduct({ ...editingProduct, tags: e.target.value })} />
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                                <button type="submit" className="btn-primary" style={{ flex: 1, background: 'var(--secondary)' }}>Хадгалах</button>
+                                <button type="button" className="btn-primary" onClick={() => setIsEditModalOpen(false)} style={{ flex: 1, background: 'var(--glass)' }}>Цуцлах</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {isCategoryModalOpen && (
                 <div className="modal-overlay">
                     <div className="admin-modal glass-morphism">
