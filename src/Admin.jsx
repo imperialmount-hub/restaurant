@@ -147,6 +147,7 @@ function Admin() {
     };
 
     const handleSaveAIResults = async () => {
+        if (!window.confirm(`${aiResults.length} хоолыг бүртгэхдээ итгэлтэй байна уу?`)) return;
         setUploading(true);
         try {
             await addProductsBatch(aiResults);
@@ -158,6 +159,16 @@ function Admin() {
         } finally {
             setUploading(false);
         }
+    };
+
+    const handleAIResultChange = (index, field, value) => {
+        const updated = [...aiResults];
+        updated[index] = { ...updated[index], [field]: field === 'price' ? parseInt(value) || 0 : value };
+        setAiResults(updated);
+    };
+
+    const handleRemoveAIResult = (index) => {
+        setAiResults(aiResults.filter((_, i) => i !== index));
     };
 
     const updateOrderStatus = (id) => {
@@ -520,16 +531,50 @@ function Admin() {
                                     <thead>
                                         <tr>
                                             <th>Нэр</th>
-                                            <th>Үнэ</th>
+                                            <th style={{ width: '120px' }}>Үнэ (₮)</th>
                                             <th>Ангилал</th>
+                                            <th style={{ width: '50px' }}></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {aiResults.map((res, i) => (
                                             <tr key={i}>
-                                                <td>{res.title}</td>
-                                                <td>{res.price.toLocaleString()}₮</td>
-                                                <td>{res.category}</td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        value={res.title}
+                                                        onChange={(e) => handleAIResultChange(i, 'title', e.target.value)}
+                                                        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit', padding: '0.2rem' }}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        value={res.price}
+                                                        onChange={(e) => handleAIResultChange(i, 'price', e.target.value)}
+                                                        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit', padding: '0.2rem' }}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <select
+                                                        value={res.category}
+                                                        onChange={(e) => handleAIResultChange(i, 'category', e.target.value)}
+                                                        style={{ width: '100%', border: 'none', background: 'transparent', color: 'inherit', padding: '0.2rem' }}
+                                                    >
+                                                        {categories.filter(c => c.id !== 'all').map(cat => (
+                                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn-icon"
+                                                        onClick={() => handleRemoveAIResult(i)}
+                                                        style={{ padding: '0.2rem' }}
+                                                    >
+                                                        ❌
+                                                    </button>
+                                                </td>
                                             </tr>
                                         ))}
                                     </tbody>
