@@ -10,7 +10,7 @@ const initialOrders = [
 
 function Admin() {
     const {
-        menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus,
+        menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus, uploadImage,
         categories, addCategory, deleteCategory
     } = useMenu();
     const [activeTab, setActiveTab] = useState('orders');
@@ -48,14 +48,28 @@ function Admin() {
         }
     }, []);
 
-    const handleAddSubmit = (e) => {
+    const handleAddSubmit = async (e) => {
         e.preventDefault();
-        addProduct({
-            ...newProduct,
-            price: parseInt(newProduct.price) || 0
-        });
-        setNewProduct({ title: '', category: 'buuz', price: '', description: '', tags: '' });
-        setIsModalOpen(false);
+        setUploading(true);
+        try {
+            let imageUrl = '/images/burger.png';
+            if (newProduct.imageFile) {
+                imageUrl = await uploadImage(newProduct.imageFile);
+            }
+
+            await addProduct({
+                ...newProduct,
+                price: parseInt(newProduct.price) || 0,
+                image: imageUrl
+            });
+            setNewProduct({ title: '', category: 'buuz', price: '', description: '', tags: '' });
+            setIsModalOpen(false);
+        } catch (err) {
+            console.error(err);
+            alert("Зураг хуулахад алдаа гарлаа");
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleEditClick = (product) => {
@@ -66,17 +80,31 @@ function Admin() {
         setIsEditModalOpen(true);
     };
 
-    const handleEditSubmit = (e) => {
+    const handleEditSubmit = async (e) => {
         e.preventDefault();
         if (!editingProduct) return;
 
-        const { id, ...data } = editingProduct;
-        updateProduct(id, {
-            ...data,
-            price: parseInt(data.price) || 0
-        });
-        setIsEditModalOpen(false);
-        setEditingProduct(null);
+        setUploading(true);
+        try {
+            let imageUrl = editingProduct.image;
+            if (editingProduct.imageFile) {
+                imageUrl = await uploadImage(editingProduct.imageFile);
+            }
+
+            const { id, imageFile, ...data } = editingProduct;
+            await updateProduct(id, {
+                ...data,
+                price: parseInt(data.price) || 0,
+                image: imageUrl
+            });
+            setIsEditModalOpen(false);
+            setEditingProduct(null);
+        } catch (err) {
+            console.error(err);
+            alert("Зураг хуулахад алдаа гарлаа");
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleCategorySubmit = (e) => {
