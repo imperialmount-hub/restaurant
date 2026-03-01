@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
 import { useMenu } from './MenuContext';
+import { analyzeMenuImage } from './aiService';
 
 const initialOrders = [
     { id: '#1204', customer: 'Зочин', items: 'Бууз (x10), Хуушуур (x5)', total: '27,000₮', locationType: 'table', locationNumber: '12', status: 'pending', time: '10:30' },
@@ -27,6 +28,10 @@ function Admin() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [uploading, setUploading] = useState(false);
+
+    const [isAIScannerOpen, setIsAIScannerOpen] = useState(false);
+    const [aiResults, setAiResults] = useState([]);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [newCategory, setNewCategory] = useState({
@@ -114,6 +119,42 @@ function Admin() {
         setIsCategoryModalOpen(false);
     };
 
+    const handleAIScan = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsAnalyzing(true);
+        try {
+            // Convert file to base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const results = await analyzeMenuImage(base64, file.type);
+                setAiResults(results);
+                setIsAnalyzing(false);
+            };
+        } catch (err) {
+            console.error(err);
+            alert("AI шинжилгээнд алдаа гарлаа. API Key зөв эсэхийг шалгана уу.");
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleSaveAIResults = async () => {
+        setUploading(true);
+        try {
+            await addProductsBatch(aiResults);
+            setIsAIScannerOpen(false);
+            setAiResults([]);
+            alert("Бүх хоолыг амжилттай бүртгэлээ!");
+        } catch (err) {
+            alert("Хадгалахад алдаа гарлаа.");
+        } finally {
+            setUploading(false);
+        }
+    };
+
     const updateOrderStatus = (id) => {
         const updated = orders.map(order =>
             order.id === id ? { ...order, status: 'completed' } : order
@@ -144,9 +185,14 @@ function Admin() {
                         {activeTab === 'settings' && 'Системийн Тохиргоо'}
                     </h2>
                     {activeTab === 'products' && (
-                        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
-                            + Шинэ хоол нэмэх
-                        </button>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button className="btn-primary" onClick={() => setIsAIScannerOpen(true)} style={{ background: 'var(--accent)' }}>
+                                ✨ AI-аар бүртгэх
+                            </button>
+                            <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+                                + Шинэ хоол нэмэх
+                            </button>
+                        </div>
                     )}
                     {activeTab === 'orders' && (
                         <button className="btn-primary">
@@ -436,6 +482,66 @@ function Admin() {
                                 <button type="button" className="btn-primary" onClick={() => setIsCategoryModalOpen(false)} style={{ flex: 1, background: 'var(--glass)' }}>Цуцлах</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {isAIScannerOpen && (
+                <div className="modal-overlay">
+                    <div className="admin-modal glass-morphism" style={{ maxWidth: '800px' }}>
+                        <h2 style={{ marginBottom: '1.5rem' }}>✨ AI Меню Сканнер</h2>
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+                            Цэснийхээ зургийг оруулснаар AI автоматаар хоолнуудыг ялган авна.
+                        </p>
+
+                        {!aiResults.length ? (
+                            <div className="form-group" style={{ textAlign: 'center', padding: '3rem', border: '2px dashed var(--glass-border)', borderRadius: '15px' }}>
+                                {isAnalyzing ? (
+                                    <div className="loader-container">
+                                        <div className="loader"></div>
+                                        <p style={{ marginTop: '1rem' }}>AI зургийг шинжилж байна...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <label htmlFor="ai-upload" className="btn-primary" style={{ cursor: 'pointer', display: 'inline-block' }}>
+                                            Зураг сонгох
+                                        </label>
+                                        <input id="ai-upload" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAIScan} />
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1.5rem' }}>
+                                <table className="order-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Нэр</th>
+                                            <th>Үнэ</th>
+                                            <th>Ангилал</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {aiResults.map((res, i) => (
+                                            <tr key={i}>
+                                                <td>{res.title}</td>
+                                                <td>{res.price.toLocaleString()}₮</td>
+                                                <td>{res.category}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                            {aiResults.length > 0 && (
+                                <button className="btn-primary" style={{ flex: 1, background: 'var(--secondary)' }} onClick={handleSaveAIResults} disabled={uploading}>
+                                    {uploading ? 'Хадгалж байна...' : `Бүх (${aiResults.length}) хоолыг хадгалах`}
+                                </button>
+                            )}
+                            <button className="btn-primary" onClick={() => { setIsAIScannerOpen(false); setAiResults([]); }} style={{ flex: 1, background: 'var(--glass)' }}>
+                                Хаах
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

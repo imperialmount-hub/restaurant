@@ -13,7 +13,8 @@ import {
     updateDoc,
     doc,
     query,
-    orderBy
+    orderBy,
+    writeBatch
 } from 'firebase/firestore';
 
 const MenuContext = createContext();
@@ -83,6 +84,24 @@ export const MenuProvider = ({ children }) => {
             await addDoc(collection(db, 'menuItems'), newProduct);
         } catch (error) {
             console.error("Error adding product: ", error);
+        }
+    };
+
+    const addProductsBatch = async (products) => {
+        try {
+            const batch = writeBatch(db);
+            products.forEach(product => {
+                const docRef = doc(collection(db, 'menuItems'));
+                batch.set(docRef, {
+                    ...product,
+                    image: product.image || '/images/burger.png',
+                    isActive: true,
+                    createdAt: Date.now()
+                });
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Error adding products batch: ", error);
         }
     };
 
@@ -167,7 +186,7 @@ export const MenuProvider = ({ children }) => {
 
     return (
         <MenuContext.Provider value={{
-            menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus, uploadImage,
+            menuItems, addProduct, addProductsBatch, deleteProduct, updateProduct, toggleProductStatus, uploadImage,
             categories, addCategory, deleteCategory
         }}>
             {children}
