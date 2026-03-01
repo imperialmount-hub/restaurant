@@ -304,6 +304,10 @@ function Admin() {
                         <h2 style={{ marginBottom: '1.5rem' }}>Шинэ хоол нэмэх</h2>
                         <form onSubmit={handleAddSubmit}>
                             <div className="form-group">
+                                <label>Зураг сонгох</label>
+                                <input type="file" accept="image/*" onChange={e => setNewProduct({ ...newProduct, imageFile: e.target.files[0] })} />
+                            </div>
+                            <div className="form-group">
                                 <label>Хоолны нэр</label>
                                 <input type="text" required value={newProduct.title} onChange={e => setNewProduct({ ...newProduct, title: e.target.value })} placeholder="ж.нь: Татсан махтай хуушуур" />
                             </div>
