@@ -1,4 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { db } from './firebase';
+import {
+    collection,
+    onSnapshot,
+    addDoc,
+    deleteDoc,
+    doc,
+    query,
+    orderBy
+} from 'firebase/firestore';
 
 const MenuContext = createContext();
 
@@ -20,50 +30,86 @@ const initialCategories = [
 ];
 
 export const MenuProvider = ({ children }) => {
-    const [menuItems, setMenuItems] = useState(() => {
-        const saved = localStorage.getItem('menuItems');
-        return saved ? JSON.parse(saved) : initialMenuItems;
-    });
+    const [menuItems, setMenuItems] = useState([]);
+    const [categories, setCategories] = useState(initialCategories);
 
-    const [categories, setCategories] = useState(() => {
-        const saved = localStorage.getItem('categories');
-        return saved ? JSON.parse(saved) : initialCategories;
-    });
-
+    // Listen to menuItems from Firestore
     useEffect(() => {
-        localStorage.setItem('menuItems', JSON.stringify(menuItems));
-    }, [menuItems]);
+        const q = query(collection(db, 'menuItems'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const items = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setMenuItems(items.length > 0 ? items : initialMenuItems);
+        });
+        return () => unsubscribe();
+    }, []);
 
+    // Listen to categories from Firestore
     useEffect(() => {
-        localStorage.setItem('categories', JSON.stringify(categories));
-    }, [categories]);
+        const q = query(collection(db, 'categories'));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const cats = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
 
-    const addProduct = (product) => {
-        const newProduct = {
-            ...product,
-            id: Date.now(),
-            image: product.image || '/images/burger.png', // Fallback image
-            tags: product.tags ? product.tags.split(',').map(tag => tag.trim()) : ['New']
-        };
-        setMenuItems([...menuItems, newProduct]);
+            // Ensure "All" category is always at the start if not in DB
+            const finalCats = cats.length > 0 ? cats : initialCategories;
+            if (!finalCats.find(c => c.id === 'all')) {
+                finalCats.unshift(initialCategories[0]);
+            }
+            setCategories(finalCats);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const addProduct = async (product) => {
+        try {
+            const newProduct = {
+                ...product,
+                image: product.image || '/images/burger.png',
+                tags: product.tags ? product.tags.split(',').map(tag => tag.trim()) : ['New'],
+                createdAt: Date.now()
+            };
+            await addDoc(collection(db, 'menuItems'), newProduct);
+        } catch (error) {
+            console.error("Error adding product: ", error);
+        }
     };
 
-    const deleteProduct = (id) => {
-        setMenuItems(menuItems.filter(item => item.id !== id));
+    const deleteProduct = async (id) => {
+        try {
+            await deleteDoc(doc(db, 'menuItems', id));
+        } catch (error) {
+            console.error("Error deleting product: ", error);
+        }
     };
 
-    const addCategory = (category) => {
-        const newCategory = {
-            id: category.id || `cat_${Date.now()}`,
-            name: category.name,
-            icon: category.icon || '🍽️'
-        };
-        setCategories([...categories, newCategory]);
+    const addCategory = async (category) => {
+        try {
+            const newCat = {
+                name: category.name,
+                icon: category.icon || '🍽️',
+                id: category.id // User provided ID
+            };
+            // Note: If using user-provided ID as document ID:
+            // await setDoc(doc(db, 'categories', category.id), newCat);
+            // But let's use addDoc for simplicity or consistency if prefered.
+            await addDoc(collection(db, 'categories'), newCat);
+        } catch (error) {
+            console.error("Error adding category: ", error);
+        }
     };
 
-    const deleteCategory = (id) => {
-        if (id === 'all') return; // Cannot delete the "All" category
-        setCategories(categories.filter(cat => cat.id !== id));
+    const deleteCategory = async (id) => {
+        if (id === 'all') return;
+        try {
+            await deleteDoc(doc(db, 'categories', id));
+        } catch (error) {
+            console.error("Error deleting category: ", error);
+        }
     };
 
     return (
