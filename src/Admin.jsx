@@ -9,7 +9,7 @@ const initialOrders = [
 ];
 
 function Admin() {
-    const { menuItems, addProduct, deleteProduct, categories, addCategory, deleteCategory } = useMenu();
+    const { menuItems, addProduct, deleteProduct, updateProduct, categories, addCategory, deleteCategory } = useMenu();
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -20,6 +20,9 @@ function Admin() {
         description: '',
         tags: ''
     });
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
 
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [newCategory, setNewCategory] = useState({
@@ -49,6 +52,27 @@ function Admin() {
         });
         setNewProduct({ title: '', category: 'buuz', price: '', description: '', tags: '' });
         setIsModalOpen(false);
+    };
+
+    const handleEditClick = (product) => {
+        setEditingProduct({
+            ...product,
+            tags: Array.isArray(product.tags) ? product.tags.join(', ') : product.tags
+        });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSubmit = (e) => {
+        e.preventDefault();
+        if (!editingProduct) return;
+
+        const { id, ...data } = editingProduct;
+        updateProduct(id, {
+            ...data,
+            price: parseInt(data.price) || 0
+        });
+        setIsEditModalOpen(false);
+        setEditingProduct(null);
     };
 
     const handleCategorySubmit = (e) => {
@@ -161,6 +185,7 @@ function Admin() {
                                     <td style={{ color: 'var(--secondary)', fontWeight: 700 }}>{item.price.toLocaleString()}₮</td>
                                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '200px' }}>{item.description}</td>
                                     <td>
+                                        <button className="btn-icon" onClick={() => handleEditClick(item)}>✏️</button>
                                         <button className="btn-icon" onClick={() => deleteProduct(item.id)}>🗑️</button>
                                     </td>
                                 </tr>

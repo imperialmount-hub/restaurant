@@ -87,6 +87,19 @@ export const MenuProvider = ({ children }) => {
         }
     };
 
+    const updateProduct = async (id, updatedProduct) => {
+        try {
+            const productRef = doc(db, 'menuItems', id);
+            await updateDoc(productRef, {
+                ...updatedProduct,
+                tags: typeof updatedProduct.tags === 'string' ? updatedProduct.tags.split(',').map(tag => tag.trim()) : updatedProduct.tags,
+                updatedAt: Date.now()
+            });
+        } catch (error) {
+            console.error("Error updating product: ", error);
+        }
+    };
+
     const addCategory = async (category) => {
         try {
             const newCat = {
@@ -114,7 +127,7 @@ export const MenuProvider = ({ children }) => {
 
     return (
         <MenuContext.Provider value={{
-            menuItems, addProduct, deleteProduct,
+            menuItems, addProduct, deleteProduct, updateProduct,
             categories, addCategory, deleteCategory
         }}>
             {children}
