@@ -72,6 +72,7 @@ export const MenuProvider = ({ children }) => {
                 ...product,
                 image: product.image || '/images/burger.png',
                 tags: product.tags ? product.tags.split(',').map(tag => tag.trim()) : ['New'],
+                isActive: true,
                 createdAt: Date.now()
             };
             await addDoc(collection(db, 'menuItems'), newProduct);
@@ -98,6 +99,17 @@ export const MenuProvider = ({ children }) => {
             });
         } catch (error) {
             console.error("Error updating product: ", error);
+        }
+    };
+
+    const toggleProductStatus = async (id, currentStatus) => {
+        try {
+            const productRef = doc(db, 'menuItems', id);
+            await updateDoc(productRef, {
+                isActive: !currentStatus
+            });
+        } catch (error) {
+            console.error("Error toggling product status: ", error);
         }
     };
 
@@ -128,7 +140,7 @@ export const MenuProvider = ({ children }) => {
 
     return (
         <MenuContext.Provider value={{
-            menuItems, addProduct, deleteProduct, updateProduct,
+            menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus,
             categories, addCategory, deleteCategory
         }}>
             {children}

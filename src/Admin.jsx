@@ -9,7 +9,10 @@ const initialOrders = [
 ];
 
 function Admin() {
-    const { menuItems, addProduct, deleteProduct, updateProduct, categories, addCategory, deleteCategory } = useMenu();
+    const {
+        menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus,
+        categories, addCategory, deleteCategory
+    } = useMenu();
     const [activeTab, setActiveTab] = useState('orders');
     const [orders, setOrders] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -178,15 +181,28 @@ function Admin() {
                         </thead>
                         <tbody>
                             {menuItems.map(item => (
-                                <tr key={item.id}>
-                                    <td><img src={item.image} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} /></td>
-                                    <td style={{ fontWeight: 600 }}>{item.title}</td>
+                                <tr key={item.id} style={{ opacity: item.isActive === false ? 0.5 : 1 }}>
+                                    <td>
+                                        <div style={{ position: 'relative', width: '40px', height: '40px' }}>
+                                            <img src={item.image} alt="" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} />
+                                            {item.isActive === false && (
+                                                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: 'white' }}>OFF</div>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td style={{ fontWeight: 600 }}>
+                                        {item.title}
+                                        {item.isActive === false && <span style={{ marginLeft: '10px', fontSize: '10px', padding: '2px 5px', background: '#ff4444', borderRadius: '4px', verticalAlign: 'middle' }}>Идэвхгүй</span>}
+                                    </td>
                                     <td><span className="tag" style={{ background: 'var(--glass)', color: 'var(--primary)' }}>{item.category}</span></td>
                                     <td style={{ color: 'var(--secondary)', fontWeight: 700 }}>{item.price.toLocaleString()}₮</td>
                                     <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '200px' }}>{item.description}</td>
                                     <td>
-                                        <button className="btn-icon" onClick={() => handleEditClick(item)}>✏️</button>
-                                        <button className="btn-icon" onClick={() => deleteProduct(item.id)}>🗑️</button>
+                                        <button className="btn-icon" title="Засах" onClick={() => handleEditClick(item)}>✏️</button>
+                                        <button className="btn-icon" title={item.isActive === false ? "Идэвхжүүлэх" : "Идэвхгүй болгох"} onClick={() => toggleProductStatus(item.id, item.isActive)}>
+                                            {item.isActive === false ? '👁️‍🗨️' : '👁️'}
+                                        </button>
+                                        <button className="btn-icon" title="Устгах" onClick={() => { if (window.confirm('Устгахдаа итгэлтэй байна уу?')) deleteProduct(item.id) }}>🗑️</button>
                                     </td>
                                 </tr>
                             ))}
