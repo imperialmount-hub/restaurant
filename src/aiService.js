@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Note: Replace with actual API key or use environment variables
-const API_KEY = "YOUR_GEMINI_API_KEY";
+const API_KEY = "AIzaSyAQvD6LT7KlMqO3QNQZb-aZRsoln0Qjpw0";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const analyzeMenuImage = async (base64Image, mimeType) => {
