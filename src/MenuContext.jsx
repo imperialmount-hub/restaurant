@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from './firebase';
+import { db, storage } from './firebase';
+import {
+    ref,
+    uploadBytesResumable,
+    getDownloadURL
+} from 'firebase/storage';
 import {
     collection,
     onSnapshot,
@@ -113,6 +118,28 @@ export const MenuProvider = ({ children }) => {
         }
     };
 
+    const uploadImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const storageRef = ref(storage, `menu/${Date.now()}_${file.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Progress can be handled here if needed
+                },
+                (error) => {
+                    console.error("Upload error: ", error);
+                    reject(error);
+                },
+                () => {
+                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+                        resolve(downloadURL);
+                    });
+                }
+            );
+        });
+    };
+
     const addCategory = async (category) => {
         try {
             const newCat = {
@@ -140,7 +167,7 @@ export const MenuProvider = ({ children }) => {
 
     return (
         <MenuContext.Provider value={{
-            menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus,
+            menuItems, addProduct, deleteProduct, updateProduct, toggleProductStatus, uploadImage,
             categories, addCategory, deleteCategory
         }}>
             {children}

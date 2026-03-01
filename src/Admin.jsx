@@ -26,6 +26,7 @@ function Admin() {
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [newCategory, setNewCategory] = useState({
@@ -327,7 +328,9 @@ function Admin() {
                                 <input type="text" value={newProduct.tags} onChange={e => setNewProduct({ ...newProduct, tags: e.target.value })} placeholder="Best Seller, Spicy" />
                             </div>
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Нэмэх</button>
+                                <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={uploading}>
+                                    {uploading ? 'Хуулж байна...' : 'Нэмэх'}
+                                </button>
                                 <button type="button" className="btn-primary" onClick={() => setIsModalOpen(false)} style={{ flex: 1, background: 'var(--glass)' }}>Цуцлах</button>
                             </div>
                         </form>
@@ -340,6 +343,10 @@ function Admin() {
                     <div className="admin-modal glass-morphism">
                         <h2 style={{ marginBottom: '1.5rem' }}>Хоол засах</h2>
                         <form onSubmit={handleEditSubmit}>
+                            <div className="form-group">
+                                <label>Зураг солих</label>
+                                <input type="file" accept="image/*" onChange={e => setEditingProduct({ ...editingProduct, imageFile: e.target.files[0] })} />
+                            </div>
                             <div className="form-group">
                                 <label>Хоолны нэр</label>
                                 <input type="text" required value={editingProduct.title} onChange={e => setEditingProduct({ ...editingProduct, title: e.target.value })} />
@@ -365,7 +372,9 @@ function Admin() {
                                 <input type="text" value={editingProduct.tags} onChange={e => setEditingProduct({ ...editingProduct, tags: e.target.value })} />
                             </div>
                             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                                <button type="submit" className="btn-primary" style={{ flex: 1, background: 'var(--secondary)' }}>Хадгалах</button>
+                                <button type="submit" className="btn-primary" style={{ flex: 1, background: 'var(--secondary)' }} disabled={uploading}>
+                                    {uploading ? 'Хуулж байна...' : 'Хадгалах'}
+                                </button>
                                 <button type="button" className="btn-primary" onClick={() => setIsEditModalOpen(false)} style={{ flex: 1, background: 'var(--glass)' }}>Цуцлах</button>
                             </div>
                         </form>
